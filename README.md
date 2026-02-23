@@ -1,10 +1,10 @@
-# Squirrel
+# 🐿️ Squirrel
 
-> Like a squirrel that forgot where it buried its nuts - find your forgotten Claude Code projects.
+> Like a squirrel that forgot where it buried its nuts — find your forgotten Claude Code projects.
 
 Squirrel analyzes your Claude Code history to find projects you started but forgot about.
 
-## Install
+## 🔧 Install
 
 ```bash
 go install github.com/dkd-dobberkau/squirrel/cmd/squirrel@latest
@@ -19,7 +19,7 @@ go build -o squirrel ./cmd/squirrel
 cp squirrel /usr/local/bin/
 ```
 
-## Usage
+## 🚀 Usage
 
 ```bash
 squirrel                # Show everything (default: medium depth, 14 days)
@@ -34,11 +34,11 @@ squirrel --days 30      # Look back 30 days
 squirrel --json         # JSON output for scripting
 ```
 
-## Claude Code Skill
+## 🤖 Claude Code Skill
 
 Copy `skill/SKILL.md` to `~/.claude/skills/squirrel/SKILL.md`, then use `/squirrel` in any Claude Code session.
 
-## How It Works
+## 🧠 How It Works
 
 Squirrel reads:
 - `~/.claude/history.jsonl` - your prompt history across all projects
@@ -46,6 +46,10 @@ Squirrel reads:
 - Git status of project directories (medium/deep mode)
 
 It categorizes projects into:
-- **Open Work** - uncommitted changes, feature branches
-- **Recent Activity** - clean projects you worked on recently
-- **Sleeping** - projects that went quiet
+- 🚧 **Open Work** — uncommitted changes, feature branches
+- ✅ **Recent Activity** — clean projects you worked on recently
+- 😴 **Sleeping** — projects that went quiet
+
+## 📄 License
+
+MIT — see [LICENSE](LICENSE)

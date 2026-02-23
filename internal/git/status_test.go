@@ -102,6 +102,42 @@ func TestCheckStatus_FeatureBranch(t *testing.T) {
 	}
 }
 
+func TestCheckStatus_RespectsGitignore(t *testing.T) {
+	dir := t.TempDir()
+
+	run := func(args ...string) {
+		cmd := exec.Command("git", args...)
+		cmd.Dir = dir
+		cmd.Run()
+	}
+	run("init")
+	run("config", "user.email", "test@test.com")
+	run("config", "user.name", "Test")
+
+	os.WriteFile(filepath.Join(dir, ".gitignore"), []byte("*.log\nbuild/\n"), 0644)
+	os.WriteFile(filepath.Join(dir, "file.txt"), []byte("hello"), 0644)
+	run("add", ".")
+	run("commit", "-m", "init")
+
+	// Create files that should be ignored
+	os.WriteFile(filepath.Join(dir, "debug.log"), []byte("log data"), 0644)
+	os.MkdirAll(filepath.Join(dir, "build"), 0755)
+	os.WriteFile(filepath.Join(dir, "build", "output.bin"), []byte("binary"), 0644)
+
+	status, err := CheckStatus(dir)
+	if err != nil {
+		t.Fatalf("CheckStatus failed: %v", err)
+	}
+
+	if status.IsDirty {
+		t.Error("expected clean repo (ignored files should not count), got dirty")
+	}
+
+	if status.UncommittedFiles != 0 {
+		t.Errorf("expected 0 uncommitted files (ignored files should not count), got %d", status.UncommittedFiles)
+	}
+}
+
 func TestCheckStatus_NotARepo(t *testing.T) {
 	dir := t.TempDir()
 

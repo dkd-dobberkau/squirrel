@@ -1,9 +1,8 @@
 package git
 
 import (
+	"os/exec"
 	"strings"
-
-	gogit "github.com/go-git/go-git/v5"
 )
 
 // RepoStatus holds the git status of a project directory.
@@ -15,41 +14,46 @@ type RepoStatus struct {
 	UncommittedFiles int    `json:"uncommittedFiles"`
 }
 
-// CheckStatus checks the git status of a directory.
+// CheckStatus checks the git status of a directory using native git commands.
+// This respects .gitignore, .git/info/exclude, and the global gitignore.
 // Returns a zero-value RepoStatus with IsRepo=false if the directory is not a git repo.
 func CheckStatus(path string) (RepoStatus, error) {
-	repo, err := gogit.PlainOpen(path)
-	if err != nil {
+	if !isGitRepo(path) {
 		return RepoStatus{IsRepo: false}, nil
 	}
 
 	status := RepoStatus{IsRepo: true}
 
-	head, err := repo.Head()
-	if err == nil {
-		ref := head.Name().Short()
-		status.Branch = ref
-		status.IsFeatureBranch = isFeatureBranch(ref)
+	if branch, err := gitCommand(path, "rev-parse", "--abbrev-ref", "HEAD"); err == nil {
+		status.Branch = strings.TrimSpace(branch)
+		status.IsFeatureBranch = isFeatureBranch(status.Branch)
 	}
 
-	wt, err := repo.Worktree()
-	if err != nil {
-		return status, nil
-	}
-
-	ws, err := wt.Status()
-	if err != nil {
-		return status, nil
-	}
-
-	for _, s := range ws {
-		if s.Worktree != gogit.Unmodified || s.Staging != gogit.Unmodified {
-			status.UncommittedFiles++
+	if porcelain, err := gitCommand(path, "status", "--porcelain"); err == nil {
+		lines := strings.Split(strings.TrimSpace(porcelain), "\n")
+		for _, line := range lines {
+			if line != "" {
+				status.UncommittedFiles++
+			}
 		}
+		status.IsDirty = status.UncommittedFiles > 0
 	}
-	status.IsDirty = status.UncommittedFiles > 0
 
 	return status, nil
+}
+
+func isGitRepo(path string) bool {
+	cmd := exec.Command("git", "-C", path, "rev-parse", "--git-dir")
+	return cmd.Run() == nil
+}
+
+func gitCommand(path string, args ...string) (string, error) {
+	fullArgs := append([]string{"-C", path}, args...)
+	out, err := exec.Command("git", fullArgs...).Output()
+	if err != nil {
+		return "", err
+	}
+	return string(out), nil
 }
 
 func isFeatureBranch(name string) bool {

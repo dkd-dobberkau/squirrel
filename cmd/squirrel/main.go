@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
+	"time"
 
 	"github.com/spf13/cobra"
 
@@ -188,6 +190,32 @@ Run the squirrel CLI to analyze Claude Code history and present results.
 - Use --days 30 for a broader view
 `
 
+var nutsCmd = &cobra.Command{
+	Use:    "nuts",
+	Hidden: true,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		data, err := runAnalysis()
+		if err != nil {
+			return err
+		}
+		nutCount := len(data.OpenWork)
+		if nutCount == 0 {
+			fmt.Println("\n🐿️ No nuts buried — your filesystem is clean!")
+			return nil
+		}
+
+		fmt.Println()
+		for i := 1; i <= nutCount; i++ {
+			nuts := strings.Repeat("🥜 ", i)
+			fmt.Printf("\r\033[K%s🐿️💨", nuts)
+			time.Sleep(80 * time.Millisecond)
+			fmt.Println()
+		}
+		fmt.Printf("\n🐿️  %d nuts buried across your filesystem!\n\n", nutCount)
+		return nil
+	},
+}
+
 func resolveDepthShortcuts(cmd *cobra.Command) {
 	if q, _ := cmd.Flags().GetBool("quick"); q {
 		depth = "quick"
@@ -215,6 +243,7 @@ func init() {
 	rootCmd.AddCommand(timelineCmd)
 	rootCmd.AddCommand(projectCmd)
 	rootCmd.AddCommand(installSkillCmd)
+	rootCmd.AddCommand(nutsCmd)
 }
 
 func main() {

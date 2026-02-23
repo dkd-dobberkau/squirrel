@@ -35,6 +35,11 @@ homebrew_casks:
       - squirrel
     homepage: "https://github.com/dkd-dobberkau/squirrel"
     description: "Find your forgotten Claude Code projects"
+    caveats: "If macOS blocks the binary, run: xattr -d com.apple.quarantine $(which squirrel)"
+    hooks:
+      post:
+        install: |
+          system_command "/usr/bin/xattr", args: ["-d", "com.apple.quarantine", "#{staged_path}/squirrel"]
     repository:
       owner: dkd-dobberkau
       name: homebrew-tap

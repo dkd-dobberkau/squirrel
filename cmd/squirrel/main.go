@@ -12,6 +12,8 @@ import (
 	"github.com/dkd-dobberkau/squirrel/internal/output"
 )
 
+var version = "dev"
+
 var (
 	depth   string
 	days    int
@@ -57,9 +59,10 @@ func renderOutput(data analyzer.CategorizedProjects) error {
 }
 
 var rootCmd = &cobra.Command{
-	Use:   "squirrel",
-	Short: "Find your forgotten Claude Code projects",
-	Long:  "Squirrel helps you find projects you started in Claude Code but forgot about.",
+	Use:     "squirrel",
+	Short:   "Find your forgotten Claude Code projects",
+	Long:    "Squirrel helps you find projects you started in Claude Code but forgot about.",
+	Version: version,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return statusCmd.RunE(cmd, args)
 	},

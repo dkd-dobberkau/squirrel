@@ -36,7 +36,13 @@ squirrel --json         # JSON output for scripting
 
 ## 🤖 Claude Code Skill
 
-Copy `skill/SKILL.md` to `~/.claude/skills/squirrel/SKILL.md`, then use `/squirrel` in any Claude Code session.
+Install the `/squirrel` skill for Claude Code:
+
+```bash
+squirrel install-skill
+```
+
+Then use `/squirrel` in any Claude Code session for AI-powered project recommendations.
 
 ## 🧠 How It Works
 

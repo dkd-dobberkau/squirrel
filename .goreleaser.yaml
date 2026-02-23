@@ -1,0 +1,41 @@
+version: 2
+
+project_name: squirrel
+
+builds:
+  - main: ./cmd/squirrel/
+    binary: squirrel
+    ldflags:
+      - -s -w -X main.version={{ .Version }}
+    goos:
+      - darwin
+      - linux
+    goarch:
+      - amd64
+      - arm64
+
+archives:
+  - formats:
+      - tar.gz
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+
+checksum:
+  name_template: "checksums.txt"
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+
+homebrew_casks:
+  - name: squirrel
+    binaries:
+      - squirrel
+    homepage: "https://github.com/dkd-dobberkau/squirrel"
+    description: "Find your forgotten Claude Code projects"
+    repository:
+      owner: dkd-dobberkau
+      name: homebrew-tap
+      token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"

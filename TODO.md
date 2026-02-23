@@ -2,16 +2,16 @@
 
 ## Homebrew Tap
 
-- [ ] GitHub Repository `dkd-dobberkau/homebrew-tap` erstellen
-- [ ] Formula `squirrel.rb` schreiben (auf GoReleaser Artifacts verweisen)
+- [x] GitHub Repository `dkd-dobberkau/homebrew-tap` erstellen
+- [x] Cask via GoReleaser automatisch generieren
 - [ ] Installation testen: `brew install dkd-dobberkau/tap/squirrel`
 
 ## GoReleaser
 
-- [ ] `.goreleaser.yml` erstellen (Multi-Arch: darwin/arm64, darwin/amd64, linux/amd64, linux/arm64)
-- [ ] GitHub Action fuer automatische Releases bei Tag-Push einrichten
-- [ ] Homebrew Tap in GoReleaser Config integrieren (`brews:` Section)
-- [ ] Erster Release: `git tag v0.1.0 && git push --tags`
+- [x] `.goreleaser.yaml` erstellen (Multi-Arch: darwin/arm64, darwin/amd64, linux/amd64, linux/arm64)
+- [x] GitHub Action fuer automatische Releases bei Tag-Push einrichten
+- [x] Homebrew Tap in GoReleaser Config integrieren (`homebrew_casks:` Section)
+- [x] Erster Release: `git tag v0.1.0 && git push --tags`
 
 ## Sonstiges
 

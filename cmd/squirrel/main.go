@@ -11,15 +11,17 @@ import (
 
 	"github.com/dkd-dobberkau/squirrel/internal/analyzer"
 	"github.com/dkd-dobberkau/squirrel/internal/claude"
+	"github.com/dkd-dobberkau/squirrel/internal/config"
 	"github.com/dkd-dobberkau/squirrel/internal/output"
 )
 
 var version = "dev"
 
 var (
-	depth   string
-	days    int
-	jsonOut bool
+	depth       string
+	days        int
+	jsonOut     bool
+	forDuration string
 )
 
 func claudeDir() string {
@@ -44,7 +46,19 @@ func runAnalysis() (analyzer.CategorizedProjects, error) {
 		analyzer.EnrichWithGit(projects)
 	}
 
-	categorized := analyzer.Categorize(projects, nil)
+	// Load config for acknowledged projects
+	cfg, err := config.Load(config.DefaultPath())
+	if err != nil {
+		cfg = &config.Config{} // gracefully continue without config
+	}
+	ackedPaths := make(map[string]bool)
+	for _, p := range projects {
+		if cfg.IsAcknowledged(p.Path) {
+			ackedPaths[p.Path] = true
+		}
+	}
+
+	categorized := analyzer.Categorize(projects, ackedPaths)
 
 	if depth == "deep" {
 		allProjects := append(categorized.OpenWork, categorized.RecentActivity...)
@@ -194,6 +208,90 @@ var projectCmd = &cobra.Command{
 	},
 }
 
+var ackCmd = &cobra.Command{
+	Use:   "ack [project]",
+	Short: "Acknowledge a project (moves it to the Acknowledged section)",
+	Args:  cobra.ExactArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		cfgPath := config.DefaultPath()
+		cfg, err := config.Load(cfgPath)
+		if err != nil {
+			return err
+		}
+
+		// Resolve project
+		cDir := claudeDir()
+		histPath := filepath.Join(cDir, "history.jsonl")
+		entries, err := claude.ParseHistory(histPath)
+		if err != nil {
+			return fmt.Errorf("reading history: %w", err)
+		}
+		projects := claude.AggregateByProject(entries, 365)
+		project, ok := claude.FindProject(projects, args[0])
+		if !ok {
+			return fmt.Errorf("project %q not found", args[0])
+		}
+
+		var expiresAt *time.Time
+		if forDuration != "" {
+			d, err := config.ParseDuration(forDuration)
+			if err != nil {
+				return err
+			}
+			t := time.Now().Add(d)
+			expiresAt = &t
+		}
+
+		cfg.Ack(project.Path, expiresAt)
+		if err := config.Save(cfg, cfgPath); err != nil {
+			return err
+		}
+
+		if expiresAt != nil {
+			fmt.Printf("Acknowledged %s (expires %s)\n", project.ShortName, expiresAt.Format("02.01.2006"))
+		} else {
+			fmt.Printf("Acknowledged %s (permanent)\n", project.ShortName)
+		}
+		return nil
+	},
+}
+
+var unackCmd = &cobra.Command{
+	Use:   "unack [project]",
+	Short: "Remove acknowledgement from a project",
+	Args:  cobra.ExactArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		cfgPath := config.DefaultPath()
+		cfg, err := config.Load(cfgPath)
+		if err != nil {
+			return err
+		}
+
+		// Resolve project
+		cDir := claudeDir()
+		histPath := filepath.Join(cDir, "history.jsonl")
+		entries, err := claude.ParseHistory(histPath)
+		if err != nil {
+			return fmt.Errorf("reading history: %w", err)
+		}
+		projects := claude.AggregateByProject(entries, 365)
+		project, ok := claude.FindProject(projects, args[0])
+		if !ok {
+			return fmt.Errorf("project %q not found", args[0])
+		}
+
+		if cfg.Unack(project.Path) {
+			if err := config.Save(cfg, cfgPath); err != nil {
+				return err
+			}
+			fmt.Printf("Removed acknowledgement for %s\n", project.ShortName)
+		} else {
+			fmt.Printf("%s was not acknowledged\n", project.ShortName)
+		}
+		return nil
+	},
+}
+
 var installSkillCmd = &cobra.Command{
 	Use:   "install-skill",
 	Short: "Install the /squirrel Claude Code skill",
@@ -307,6 +405,9 @@ func init() {
 		cmd.Flags().Bool("deep", false, "Shortcut for --depth=deep")
 	}
 
+	ackCmd.Flags().StringVar(&forDuration, "for", "", "Duration (e.g. 7d, 2w, 3m)")
+	rootCmd.AddCommand(ackCmd)
+	rootCmd.AddCommand(unackCmd)
 	rootCmd.AddCommand(statusCmd)
 	rootCmd.AddCommand(stashCmd)
 	rootCmd.AddCommand(timelineCmd)

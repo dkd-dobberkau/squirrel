@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0] - 2026-02-24
+
+### Added
+
+- `squirrel ack <project>` command to acknowledge projects (moves them to a greyed-out "Acknowledged" section)
+- `squirrel unack <project>` command to remove acknowledgements
+- `--for` flag on ack for time-limited acknowledgements (e.g. `--for 7d`, `--for 2w`, `--for 3m`)
+- Config file at `~/.config/squirrel/config.json` for persistent settings
+- New `internal/config` package for config management and duration parsing
+
 ## [0.4.0] - 2026-02-24
 
 ### Added
@@ -70,6 +80,7 @@ Initial release.
 
 - Use native `git status --porcelain` instead of go-git to correctly respect `.gitignore`, `.git/info/exclude`, and global gitignore
 
+[0.5.0]: https://github.com/dkd-dobberkau/squirrel/releases/tag/v0.5.0
 [0.4.0]: https://github.com/dkd-dobberkau/squirrel/releases/tag/v0.4.0
 [0.3.0]: https://github.com/dkd-dobberkau/squirrel/releases/tag/v0.3.0
 [0.2.1]: https://github.com/dkd-dobberkau/squirrel/releases/tag/v0.2.1

@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - 2026-02-24
+
+### Added
+
+- `squirrel project <query>` command with detailed project view (metadata, sessions, recent prompts, TODOs)
+- Fuzzy project lookup: matches by exact path, short name, path suffix, or substring
+- Deep-mode TODO extraction: parses session JSONL files for TODO/FIXME/HACK markers and unchecked checkboxes
+- `PromptsForProject()` history filter for per-project prompt retrieval
+- JSON output for project detail view (`squirrel project <query> --json`)
+- `--deep` flag on `project` command enriches with extracted TODOs from session data
+- `status --deep` now also enriches all projects with TODO data
+
 ## [0.3.0] - 2026-02-24
 
 ### Added
@@ -58,6 +70,7 @@ Initial release.
 
 - Use native `git status --porcelain` instead of go-git to correctly respect `.gitignore`, `.git/info/exclude`, and global gitignore
 
+[0.4.0]: https://github.com/dkd-dobberkau/squirrel/releases/tag/v0.4.0
 [0.3.0]: https://github.com/dkd-dobberkau/squirrel/releases/tag/v0.3.0
 [0.2.1]: https://github.com/dkd-dobberkau/squirrel/releases/tag/v0.2.1
 [0.2.0]: https://github.com/dkd-dobberkau/squirrel/releases/tag/v0.2.0

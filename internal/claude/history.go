@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"sort"
 	"time"
 )
 
@@ -78,4 +79,25 @@ func AggregateByProject(entries []HistoryEntry, days int) []ProjectInfo {
 	}
 
 	return projects
+}
+
+// PromptsForProject filters history entries for a specific project path,
+// sorted by timestamp descending, limited to max entries.
+func PromptsForProject(entries []HistoryEntry, path string, max int) []HistoryEntry {
+	var filtered []HistoryEntry
+	for _, e := range entries {
+		if e.Project == path {
+			filtered = append(filtered, e)
+		}
+	}
+
+	sort.Slice(filtered, func(i, j int) bool {
+		return filtered[i].Timestamp > filtered[j].Timestamp
+	})
+
+	if max > 0 && len(filtered) > max {
+		filtered = filtered[:max]
+	}
+
+	return filtered
 }

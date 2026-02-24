@@ -132,6 +132,53 @@ func TestAggregateByProjectFiltersOldEntries(t *testing.T) {
 	}
 }
 
+func TestPromptsForProject(t *testing.T) {
+	entries := []HistoryEntry{
+		{Display: "a1", Timestamp: 1000, Project: "/Users/test/project-a"},
+		{Display: "b1", Timestamp: 2000, Project: "/Users/test/project-b"},
+		{Display: "a2", Timestamp: 3000, Project: "/Users/test/project-a"},
+		{Display: "a3", Timestamp: 4000, Project: "/Users/test/project-a"},
+		{Display: "b2", Timestamp: 5000, Project: "/Users/test/project-b"},
+	}
+
+	result := PromptsForProject(entries, "/Users/test/project-a", 2)
+
+	if len(result) != 2 {
+		t.Fatalf("expected 2 entries, got %d", len(result))
+	}
+
+	// Should be sorted descending by timestamp
+	if result[0].Display != "a3" {
+		t.Errorf("expected first entry 'a3', got %q", result[0].Display)
+	}
+	if result[1].Display != "a2" {
+		t.Errorf("expected second entry 'a2', got %q", result[1].Display)
+	}
+}
+
+func TestPromptsForProjectNoLimit(t *testing.T) {
+	entries := []HistoryEntry{
+		{Display: "a1", Timestamp: 1000, Project: "/Users/test/project-a"},
+		{Display: "a2", Timestamp: 2000, Project: "/Users/test/project-a"},
+	}
+
+	result := PromptsForProject(entries, "/Users/test/project-a", 0)
+	if len(result) != 2 {
+		t.Fatalf("expected 2 entries with no limit, got %d", len(result))
+	}
+}
+
+func TestPromptsForProjectNoMatch(t *testing.T) {
+	entries := []HistoryEntry{
+		{Display: "b1", Timestamp: 1000, Project: "/Users/test/project-b"},
+	}
+
+	result := PromptsForProject(entries, "/Users/test/project-a", 10)
+	if len(result) != 0 {
+		t.Fatalf("expected 0 entries, got %d", len(result))
+	}
+}
+
 func TestParseHistoryRoundTrip(t *testing.T) {
 	// Test that ParseHistory + AggregateByProject work together end-to-end
 	dir := t.TempDir()

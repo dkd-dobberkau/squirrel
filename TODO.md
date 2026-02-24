@@ -15,5 +15,5 @@
 
 ## Sonstiges
 
-- [ ] `squirrel project <pfad>` Befehl implementieren (Detail-Ansicht)
-- [ ] Deep-Modus: Session-JSONL parsen fuer TODO-Extraktion
+- [x] `squirrel project <pfad>` Befehl implementieren (Detail-Ansicht)
+- [x] Deep-Modus: Session-JSONL parsen fuer TODO-Extraktion

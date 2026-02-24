@@ -44,7 +44,29 @@ func runAnalysis() (analyzer.CategorizedProjects, error) {
 		analyzer.EnrichWithGit(projects)
 	}
 
-	return analyzer.Categorize(projects), nil
+	categorized := analyzer.Categorize(projects)
+
+	if depth == "deep" {
+		allProjects := append(categorized.OpenWork, categorized.RecentActivity...)
+		allProjects = append(allProjects, categorized.Sleeping...)
+		claude.EnrichAllWithTodos(allProjects, filepath.Join(cDir, "projects"))
+		// Write back enriched projects
+		idx := 0
+		for i := range categorized.OpenWork {
+			categorized.OpenWork[i] = allProjects[idx]
+			idx++
+		}
+		for i := range categorized.RecentActivity {
+			categorized.RecentActivity[i] = allProjects[idx]
+			idx++
+		}
+		for i := range categorized.Sleeping {
+			categorized.Sleeping[i] = allProjects[idx]
+			idx++
+		}
+	}
+
+	return categorized, nil
 }
 
 func renderOutput(data analyzer.CategorizedProjects) error {
@@ -122,7 +144,52 @@ var projectCmd = &cobra.Command{
 	Short: "Show detailed view for a specific project",
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		fmt.Printf("squirrel project %s - not yet implemented\n", args[0])
+		resolveDepthShortcuts(cmd)
+		cDir := claudeDir()
+		histPath := filepath.Join(cDir, "history.jsonl")
+
+		entries, err := claude.ParseHistory(histPath)
+		if err != nil {
+			return fmt.Errorf("reading history: %w", err)
+		}
+
+		// Use a wider window for detail view
+		projects := claude.AggregateByProject(entries, 365)
+		claude.EnrichWithSessions(projects, filepath.Join(cDir, "projects"))
+
+		if depth == "medium" || depth == "deep" {
+			analyzer.EnrichWithGit(projects)
+		}
+
+		// Score all projects
+		for i := range projects {
+			projects[i].Score = analyzer.Score(projects[i])
+		}
+
+		project, ok := claude.FindProject(projects, args[0])
+		if !ok {
+			return fmt.Errorf("project %q not found", args[0])
+		}
+
+		if depth == "deep" {
+			claude.EnrichWithTodos(&project, filepath.Join(cDir, "projects"))
+		}
+
+		prompts := claude.PromptsForProject(entries, project.Path, 10)
+
+		if jsonOut {
+			s, err := output.RenderProjectDetailJSON(output.ProjectDetail{
+				Project:       project,
+				RecentPrompts: prompts,
+			})
+			if err != nil {
+				return err
+			}
+			fmt.Println(s)
+		} else {
+			fmt.Print(output.RenderProjectDetail(project, prompts))
+		}
+
 		return nil
 	},
 }
@@ -234,9 +301,11 @@ func init() {
 	pf.BoolVar(&jsonOut, "json", false, "Output as JSON (for skill integration)")
 	pf.IntVar(&days, "days", 14, "Number of days to look back")
 
-	statusCmd.Flags().Bool("quick", false, "Shortcut for --depth=quick")
-	statusCmd.Flags().Bool("medium", false, "Shortcut for --depth=medium")
-	statusCmd.Flags().Bool("deep", false, "Shortcut for --depth=deep")
+	for _, cmd := range []*cobra.Command{statusCmd, projectCmd} {
+		cmd.Flags().Bool("quick", false, "Shortcut for --depth=quick")
+		cmd.Flags().Bool("medium", false, "Shortcut for --depth=medium")
+		cmd.Flags().Bool("deep", false, "Shortcut for --depth=deep")
+	}
 
 	rootCmd.AddCommand(statusCmd)
 	rootCmd.AddCommand(stashCmd)

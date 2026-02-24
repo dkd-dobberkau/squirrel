@@ -33,3 +33,30 @@ func TestRenderJSON(t *testing.T) {
 		t.Error("expected 'openWork' key in JSON output")
 	}
 }
+
+func TestRenderJSONWithAcknowledged(t *testing.T) {
+	data := analyzer.CategorizedProjects{
+		Acknowledged: []claude.ProjectInfo{
+			{ShortName: "acked-project", PromptCount: 13, LastActivity: time.Now()},
+		},
+	}
+
+	result, err := RenderJSON(data)
+	if err != nil {
+		t.Fatalf("RenderJSON failed: %v", err)
+	}
+
+	var parsed map[string]interface{}
+	if err := json.Unmarshal([]byte(result), &parsed); err != nil {
+		t.Fatalf("invalid JSON output: %v", err)
+	}
+
+	acked, ok := parsed["acknowledged"]
+	if !ok {
+		t.Fatal("expected 'acknowledged' key in JSON output")
+	}
+	arr, ok := acked.([]interface{})
+	if !ok || len(arr) != 1 {
+		t.Errorf("expected 1 acknowledged entry, got %v", acked)
+	}
+}

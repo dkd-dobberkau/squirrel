@@ -71,7 +71,17 @@ func RenderTerminal(data analyzer.CategorizedProjects) string {
 		}
 	}
 
-	if len(data.OpenWork) == 0 && len(data.RecentActivity) == 0 && len(data.Sleeping) == 0 {
+	if len(data.Acknowledged) > 0 {
+		b.WriteString(sectionStyle.Render(fmt.Sprintf("\nAcknowledged (%d)", len(data.Acknowledged))))
+		b.WriteString("\n")
+		for _, p := range data.Acknowledged {
+			b.WriteString(dimStyle.Render("  ✓ "))
+			b.WriteString(dimStyle.Render(formatProjectAck(p)))
+			b.WriteString("\n")
+		}
+	}
+
+	if len(data.OpenWork) == 0 && len(data.RecentActivity) == 0 && len(data.Sleeping) == 0 && len(data.Acknowledged) == 0 {
 		b.WriteString(dimStyle.Render("  Keine Projekte im gewaehlten Zeitraum gefunden."))
 		b.WriteString("\n")
 	}
@@ -168,6 +178,13 @@ func RenderProjectDetail(p claude.ProjectInfo, prompts []claude.HistoryEntry) st
 	}
 
 	return b.String()
+}
+
+func formatProjectAck(p claude.ProjectInfo) string {
+	date := p.LastActivity.Format("02.01.")
+	name := fmt.Sprintf("%-22s", truncate(p.ShortName, 22))
+	prompts := fmt.Sprintf("%4d prompts", p.PromptCount)
+	return strings.Join([]string{name, date, prompts}, " | ")
 }
 
 func formatProject(p claude.ProjectInfo) string {

@@ -39,7 +39,7 @@ homebrew_casks:
     hooks:
       post:
         install: |
-          system_command "/usr/bin/xattr", args: ["-d", "com.apple.quarantine", "#{staged_path}/squirrel"]
+          system_command "/bin/sh", args: ["-c", "/usr/bin/xattr -d com.apple.quarantine #{staged_path}/squirrel 2>/dev/null || true"]
     repository:
       owner: dkd-dobberkau
       name: homebrew-tap

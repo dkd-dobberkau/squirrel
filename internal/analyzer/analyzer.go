@@ -13,15 +13,21 @@ type CategorizedProjects struct {
 	OpenWork       []claude.ProjectInfo `json:"openWork"`
 	RecentActivity []claude.ProjectInfo `json:"recentActivity"`
 	Sleeping       []claude.ProjectInfo `json:"sleeping"`
+	Acknowledged   []claude.ProjectInfo `json:"acknowledged"`
 }
 
-// Categorize sorts projects into open work, recent activity, and sleeping.
-func Categorize(projects []claude.ProjectInfo) CategorizedProjects {
+// Categorize sorts projects into open work, recent activity, sleeping, and acknowledged.
+func Categorize(projects []claude.ProjectInfo, ackedPaths map[string]bool) CategorizedProjects {
 	var result CategorizedProjects
 
 	for _, p := range projects {
 		p.Score = Score(p)
 		p.IsOpenWork = isOpenWork(p)
+
+		if ackedPaths[p.Path] {
+			result.Acknowledged = append(result.Acknowledged, p)
+			continue
+		}
 
 		switch {
 		case p.IsOpenWork:
@@ -41,6 +47,7 @@ func Categorize(projects []claude.ProjectInfo) CategorizedProjects {
 	sortByScore(result.OpenWork)
 	sortByScore(result.RecentActivity)
 	sortByScore(result.Sleeping)
+	sortByScore(result.Acknowledged)
 
 	return result
 }

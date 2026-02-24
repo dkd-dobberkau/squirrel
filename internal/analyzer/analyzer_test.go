@@ -17,7 +17,7 @@ func TestCategorize(t *testing.T) {
 		{ShortName: "sleeping", GitDirty: false, GitBranch: "main", LastActivity: now.Add(-5 * 24 * time.Hour), DaysSinceActive: 5, PromptCount: 100},
 	}
 
-	result := Categorize(projects)
+	result := Categorize(projects, nil)
 
 	if len(result.OpenWork) != 2 {
 		t.Errorf("expected 2 open work items, got %d", len(result.OpenWork))
@@ -29,6 +29,30 @@ func TestCategorize(t *testing.T) {
 
 	if len(result.Sleeping) != 1 {
 		t.Errorf("expected 1 sleeping project, got %d", len(result.Sleeping))
+	}
+}
+
+func TestCategorizeWithAcknowledged(t *testing.T) {
+	now := time.Now()
+
+	projects := []claude.ProjectInfo{
+		{Path: "/p/dirty", ShortName: "dirty", GitDirty: true, LastActivity: now, DaysSinceActive: 0, PromptCount: 50},
+		{Path: "/p/acked", ShortName: "acked", GitDirty: true, LastActivity: now, DaysSinceActive: 0, PromptCount: 30},
+		{Path: "/p/clean", ShortName: "clean", GitBranch: "main", LastActivity: now, DaysSinceActive: 0, PromptCount: 10},
+	}
+
+	ackedPaths := map[string]bool{"/p/acked": true}
+
+	result := Categorize(projects, ackedPaths)
+
+	if len(result.OpenWork) != 1 {
+		t.Errorf("expected 1 open work, got %d", len(result.OpenWork))
+	}
+	if len(result.Acknowledged) != 1 {
+		t.Errorf("expected 1 acknowledged, got %d", len(result.Acknowledged))
+	}
+	if result.Acknowledged[0].Path != "/p/acked" {
+		t.Errorf("expected acked project, got %s", result.Acknowledged[0].Path)
 	}
 }
 

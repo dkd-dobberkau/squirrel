@@ -44,7 +44,7 @@ func runAnalysis() (analyzer.CategorizedProjects, error) {
 		analyzer.EnrichWithGit(projects)
 	}
 
-	categorized := analyzer.Categorize(projects)
+	categorized := analyzer.Categorize(projects, nil)
 
 	if depth == "deep" {
 		allProjects := append(categorized.OpenWork, categorized.RecentActivity...)
